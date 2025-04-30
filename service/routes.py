@@ -23,6 +23,7 @@ from flask import url_for  # noqa: F401 pylint: disable=unused-import
 from service.models import Product
 from service.common import status  # HTTP Status Codes
 from . import app
+from urllib.parse import quote_plus
 
 
 ######################################################################
@@ -126,3 +127,78 @@ def create_products():
 #
 # PLACE YOUR CODE TO DELETE A PRODUCT HERE
 #
+@app.route("/products/<int:product_id>", methods=["GET"])
+def get_products(product_id):
+        app.logger.info("Request to Retrieve a product with id [%s]", product_id)
+        product = Product.find(product_id)
+        if not product:
+            abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
+        app.logger.info("Returning product: %s", product.name)
+        return product.serialize(), status.HTTP_200_OK
+
+@app.route("/products/<int:product_id>", methods=["PUT"])
+def update_products(product_id):
+    product = Product.find(product_id)
+    if not product:
+        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
+    #else:
+    product.deserialize(request.get_json())
+    product.id = product_id
+    product.update()
+    return product.serialize(), status.HTTP_200_OK
+
+@app.route("/products/<int:product_id>", methods=["DELETE"])
+def delete_products(product_id):
+    product = Product.find(product_id)
+    if product:
+        product.delete()
+    return "", status.HTTP_204_NO_CONTENT
+
+@app.route("/products/", methods=["GET"])
+def list_products():
+    products = Product.all()
+    results = [product.serialize() for product in products]
+    app.logger.info("[%s] Products returned", len(results))
+    return results, status.HTTP_200_OK
+
+@app.route("/products", methods=["GET"])
+def list_products_by_name(product_id):
+    products = []
+    name = request.args.get("name")
+    if name:
+        app.logger.info("Find by name: %s", name)
+        roducts = Product.find_by_name(name)
+    else:
+        app.logger.info("Find all")
+        products = Product.all()
+        results = [product.serialize() for product in products]
+        app.logger.info("[%s] Products returned", len(results))
+        return results, status.HTTP_200_OK@app.route("/products", methods=["GET"])
+    def list_products_by_category(product_id):
+        products = []
+        name = request.args.get("category")
+        if name:
+            app.logger.info("Find by category: %s", category)
+            roducts = Product.find_by_category(category)
+        else:
+            app.logger.info("Find all")
+            products = Product.all()
+        results = [product.serialize() for product in products]
+        app.logger.info("[%s] Products returned", len(results))
+        return results, status.HTTP_200_OK
+
+
+@app.route("/products", methods=["GET"])
+def list_products_by_availability(product_id):
+    products = []
+    name = request.args.get("availability")
+    if name:
+        app.logger.info("Find by availability: %s", availability)
+        roducts = Product.find_by_availability(availability)
+    else:
+        app.logger.info("Find all")
+        products = Product.all()
+    results = [product.serialize() for product in products]
+    app.logger.info("[%s] Products returned", len(results))
+    return results, status.HTTP_200
+
